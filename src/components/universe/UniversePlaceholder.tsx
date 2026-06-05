@@ -1,10 +1,3 @@
-/**
- * components/universe/UniversePlaceholder.tsx
- *
- * Router component — renders the correct universe based on the active role.
- * This keeps page.tsx clean by delegating universe selection here.
- */
-
 'use client'
 
 import { Universe } from '@/types'
@@ -12,6 +5,7 @@ import UniverseFrontend  from './UniverseFrontend'
 import UniverseBackend   from './UniverseBackend'
 import UniverseFullstack from './UniverseFullstack'
 import UniverseWordPress from './UniverseWordPress'
+import UniverseNormal    from './UniverseNormal'
 
 interface Props {
   universe: Universe
@@ -29,5 +23,7 @@ export default function UniversePlaceholder({ universe, onOpenTerminal }: Props)
       return <UniverseFullstack onOpenTerminal={onOpenTerminal} />
     case 'wordpress':
       return <UniverseWordPress onOpenTerminal={onOpenTerminal} />
+    case 'normal':
+      return <UniverseNormal    onOpenTerminal={onOpenTerminal} />
   }
 }

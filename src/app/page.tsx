@@ -22,26 +22,16 @@ type AnimState = 'idle' | 'minimize' | 'entering'
 
 export default function Home() {
   const {
-  universe,
-  visitorName,
-  onboardingDone,
-  setOnboardingDone,
-  setUniverse,       // ← pastikan ini ada
-  setVisitorName,
-} = useMode()
+    universe,
+    visitorName,
+    onboardingDone,
+    setOnboardingDone,
+    setUniverse,
+  } = useMode()
 
-  const [animState, setAnimState] = useState<AnimState>('idle')
-
-  /**
-   * Controls whether the terminal overlay is visible.
-   * After onboarding, the floating button toggles this.
-   */
+  const [animState, setAnimState]     = useState<AnimState>('idle')
   const [terminalOpen, setTerminalOpen] = useState(false)
 
-  /**
-   * Called when onboarding completes for the first time.
-   * Triggers terminal minimize → universe entrance animation.
-   */
   const handleOnboardingComplete = useCallback((_universe: Universe, _name: string) => {
     setAnimState('minimize')
     setTimeout(() => {
@@ -55,32 +45,29 @@ export default function Home() {
   }, [setOnboardingDone])
 
   /**
-   * Called when visitor picks a new universe from the terminal overlay.
-   * Same animation as initial onboarding — minimize then enter.
+   * Skip onboarding entirely — go straight to normal universe.
+   * No name, no role selection, no animation needed.
    */
-  const handleSwitchUniverse = useCallback((newUniverse: Universe, _name: string) => {
-  setAnimState('minimize')
-  setTimeout(() => {
-    setUniverse(newUniverse)   // ← pastikan ini dipanggil
-    setTerminalOpen(false)
-    setAnimState('entering')
-  }, 600)
-  setTimeout(() => {
-    setAnimState('idle')
-  }, 1400)
-}, [setUniverse])
+  const handleSkipToNormal = useCallback(() => {
+    setUniverse('normal')
+    setOnboardingDone(true)
+  }, [setUniverse, setOnboardingDone])
 
-  /** Opens the terminal overlay */
-  const handleOpenTerminal = useCallback(() => {
-    setTerminalOpen(true)
-  }, [])
+  const handleSwitchUniverse = useCallback((newUniverse: Universe) => {
+    setAnimState('minimize')
+    setTimeout(() => {
+      setUniverse(newUniverse)
+      setTerminalOpen(false)
+      setAnimState('entering')
+    }, 600)
+    setTimeout(() => {
+      setAnimState('idle')
+    }, 1400)
+  }, [setUniverse])
 
-  /** Closes the terminal overlay without switching universe */
-  const handleCloseTerminal = useCallback(() => {
-    setTerminalOpen(false)
-  }, [])
+  const handleOpenTerminal  = useCallback(() => setTerminalOpen(true),  [])
+  const handleCloseTerminal = useCallback(() => setTerminalOpen(false), [])
 
-  /** Terminal minimize animation style */
   const terminalStyle = animState === 'minimize' ? {
     transform: 'scale(0.05) translateY(100px)',
     opacity: 0,
@@ -92,20 +79,15 @@ export default function Home() {
     transition: 'transform 0.3s ease, opacity 0.3s ease',
   }
 
-  /** Unique entrance animation per universe */
   const getUniverseStyle = (u: Universe | null): React.CSSProperties => {
     if (animState !== 'entering' || !u) return {}
     switch (u) {
-      case 'frontend':
-        return { animation: 'slideFromRight 0.6s ease-out forwards' }
-      case 'backend':
-        return { animation: 'printFadeIn 0.7s ease-out forwards' }
-      case 'fullstack':
-        return { animation: 'scaleSpring 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }
-      case 'wordpress':
-        return { animation: 'dropFromTop 0.5s ease-out forwards' }
-      default:
-        return {}
+      case 'frontend':  return { animation: 'slideFromRight 0.6s ease-out forwards' }
+      case 'backend':   return { animation: 'printFadeIn 0.7s ease-out forwards' }
+      case 'fullstack': return { animation: 'scaleSpring 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }
+      case 'wordpress': return { animation: 'dropFromTop 0.5s ease-out forwards' }
+      case 'normal':    return { animation: 'printFadeIn 0.5s ease-out forwards' }
+      default:          return {}
     }
   }
 
@@ -147,17 +129,20 @@ export default function Home() {
 
       <main className="min-h-screen bg-[#0d1117]">
 
-        {/* ── Initial onboarding ── shown on first visit */}
+        {/* ── Onboarding ── */}
         {!onboardingDone && (
           <div
-            className="flex items-center justify-center min-h-screen p-4 md:p-8"
+            className="flex flex-col items-center justify-center min-h-screen p-4 md:p-8"
             style={terminalStyle}
           >
-            <OnboardingTerminal onComplete={handleOnboardingComplete} />
+            <OnboardingTerminal
+              onComplete={handleOnboardingComplete}
+              onSkipToNormal={handleSkipToNormal}
+            />
           </div>
         )}
 
-        {/* ── Universe ── shown after onboarding */}
+        {/* ── Universe ── */}
         {onboardingDone && universe && (
           <div style={getUniverseStyle(universe)}>
             <UniversePlaceholder
@@ -168,20 +153,28 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── Terminal overlay ── opened via floating button */}
-{onboardingDone && terminalOpen && (
-  <div className="terminal-overlay" onClick={handleCloseTerminal}>
-    <div
-      className="w-full max-w-3xl"
-      onClick={e => e.stopPropagation()}
-    >
-      <SwitchUniverseTerminal
-        onComplete={handleSwitchUniverse}
-        onClose={handleCloseTerminal}
-      />
-    </div>
-  </div>
-)}
+        {/* ── Terminal overlay ── */}
+        {onboardingDone && terminalOpen && (
+          <div className="terminal-overlay" onClick={handleCloseTerminal}>
+            <div
+              className="w-full max-w-3xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex justify-end mb-2">
+                <button
+                  onClick={handleCloseTerminal}
+                  className="font-mono text-xs text-[#8b949e] hover:text-[#e6edf3] transition-colors"
+                >
+                  [esc] close
+                </button>
+              </div>
+              <SwitchUniverseTerminal
+                onComplete={handleSwitchUniverse}
+                onClose={handleCloseTerminal}
+              />
+            </div>
+          </div>
+        )}
 
       </main>
     </>

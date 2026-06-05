@@ -74,7 +74,7 @@ export type SiteMode = 'terminal' | 'ui'
  * - fullstack → complete picture, end-to-end projects
  * - wordpress → CMS, themes, plugins, client sites
  */
-export type Universe = 'frontend' | 'backend' | 'fullstack' | 'wordpress'
+export type Universe = 'frontend' | 'backend' | 'fullstack' | 'wordpress' | 'normal'
 
 /**
  * Onboarding flow steps — the terminal walks the visitor
