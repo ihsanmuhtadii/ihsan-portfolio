@@ -2,22 +2,8 @@
  * lib/context.tsx
  *
  * Global state management using React Context.
- *
- * WHY CONTEXT?
- * Multiple components (page.tsx, ModeToggle, TerminalWindow, UIView)
- * all need to know the current mode and universe. Instead of passing
- * props through every component (prop drilling), we use Context so
- * any component can access this state directly.
- *
- * HOW TO USE:
- * 1. Wrap your app with <ModeProvider> (already done in layout.tsx)
- * 2. In any component, call: const { mode, universe, visitorName } = useMode()
- *
- * EXAMPLE:
- * import { useMode } from '@/lib/context'
- * const { universe, visitorName } = useMode()
- * // universe → 'fullstack'
- * // visitorName → 'Alex'
+ * Stores mode, universe, visitor name, and onboarding status.
+ * Accessible from any component via the useMode() hook.
  */
 
 'use client'
@@ -25,7 +11,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react'
 import { SiteMode, Universe } from '@/types'
 
-/** Shape of the context value — everything stored globally */
 interface ModeContextType {
   /** Current display mode: 'terminal' or 'ui' */
   mode: SiteMode
@@ -39,40 +24,24 @@ interface ModeContextType {
   /** Whether onboarding has been completed */
   onboardingDone: boolean
 
-  /** Switch to a specific mode */
   setMode: (mode: SiteMode) => void
-
-  /** Switch to a specific universe */
   setUniverse: (universe: Universe) => void
-
-  /** Save visitor name (also persists to sessionStorage) */
   setVisitorName: (name: string) => void
-
-  /** Mark onboarding as complete */
   setOnboardingDone: (done: boolean) => void
-
-  /** Toggle between terminal and ui mode */
   toggleMode: () => void
 }
 
-/** Create the context with null as default (enforces usage inside Provider) */
 const ModeContext = createContext<ModeContextType | null>(null)
 
-/**
- * ModeProvider — wraps the entire app to provide global state.
- * Place this in layout.tsx so all pages have access.
- *
- * sessionStorage is used to persist visitor name across page refreshes
- * within the same tab. It is automatically cleared when the tab closes.
- */
 export function ModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<SiteMode>('terminal')
   const [universe, setUniverse] = useState<Universe | null>(null)
   const [onboardingDone, setOnboardingDone] = useState(false)
 
   /**
-   * Initialize visitor name from sessionStorage if it exists.
-   * This way if the user refreshes, they don't have to re-enter their name.
+   * Initialize visitor name from sessionStorage if available.
+   * sessionStorage persists only within the same browser tab.
+   * It is automatically cleared when the tab is closed.
    */
   const [visitorName, setVisitorNameState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -82,8 +51,9 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   })
 
   /**
-   * Save visitor name to both React state and sessionStorage.
-   * sessionStorage persists only for the current browser tab session.
+   * Saves visitor name to both React state and sessionStorage.
+   * We use sessionStorage (not localStorage) so data is never
+   * permanently stored — it clears when the tab closes.
    */
   const setVisitorName = (name: string) => {
     setVisitorNameState(name)
@@ -92,7 +62,6 @@ export function ModeProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  /** Toggle between terminal and ui mode */
   const toggleMode = () => {
     setMode(prev => prev === 'terminal' ? 'ui' : 'terminal')
   }
@@ -115,13 +84,8 @@ export function ModeProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * useMode — custom hook to access global mode state.
- *
- * USAGE:
- * const { mode, universe, visitorName, toggleMode } = useMode()
- *
- * Throws an error if used outside of ModeProvider,
- * which helps catch missing provider setup early.
+ * useMode — custom hook to access global state.
+ * Must be used inside a component wrapped by ModeProvider.
  */
 export function useMode() {
   const ctx = useContext(ModeContext)
