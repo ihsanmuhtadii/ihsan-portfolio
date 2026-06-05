@@ -1,30 +1,65 @@
+/**
+ * lib/commands.ts
+ *
+ * Defines all terminal commands and their output.
+ *
+ * HOW IT WORKS:
+ * Each command is a function that returns an array of OutputLine objects.
+ * The terminal renders these lines one by one in TerminalWindow.tsx.
+ *
+ * HOW TO ADD A NEW COMMAND:
+ * 1. Add the command name to CommandName in types/index.ts
+ * 2. Add a new entry in the COMMANDS object below
+ * 3. The command will automatically appear in TerminalHints.tsx
+ *
+ * HELPER FUNCTIONS:
+ * - id()   → generates a unique ID for each line (used as React key)
+ * - line() → shorthand to create an OutputLine object
+ */
+
 import { OutputLine, CommandName } from '@/types'
 
+/** Generates a random unique ID for React list keys */
 const id = () => Math.random().toString(36).slice(2)
 
+/**
+ * Creates a single terminal output line.
+ * @param text - The text content to display
+ * @param type - Color variant (default: 'default' = white)
+ */
 const line = (text: string, type: OutputLine['type'] = 'default'): OutputLine => ({
   id: id(),
   text,
   type,
 })
 
+/**
+ * COMMANDS registry.
+ * Each key is a valid command name, each value is a function
+ * that returns the array of lines to display as output.
+ */
 export const COMMANDS: Record<CommandName, () => OutputLine[]> = {
+  /**
+   * /help — lists all available commands
+   * Always keep this updated when adding new commands.
+   */
   help: () => [
     line('Available commands:', 'yellow'),
     line(''),
-    line('  whoami          → about me', 'cyan'),
-    line('  skills          → tech stack & expertise', 'cyan'),
-    line('  experience      → work history', 'cyan'),
-    line('  portfolio       → selected projects', 'cyan'),
-    line('  blog            → articles & thoughts', 'cyan'),
-    line('  certifications  → courses & certificates', 'cyan'),
-    line('  contact         → get in touch / hire me', 'cyan'),
-    line('  playground      → interactive demos', 'cyan'),
-    line('  clear           → clear terminal', 'cyan'),
+    line('  /whoami          → about me', 'cyan'),
+    line('  /skills          → tech stack & expertise', 'cyan'),
+    line('  /experience      → work history', 'cyan'),
+    line('  /portfolio       → selected projects', 'cyan'),
+    line('  /blog            → articles & thoughts', 'cyan'),
+    line('  /certifications  → courses & certificates', 'cyan'),
+    line('  /contact         → get in touch / hire me', 'cyan'),
+    line('  /playground      → interactive demos', 'cyan'),
+    line('  /clear           → clear terminal', 'cyan'),
     line(''),
     line('Tip: press Tab to autocomplete, ↑↓ to navigate history.', 'muted'),
   ],
 
+  /** /whoami — personal introduction and contact info */
   whoami: () => [
     line('Ihsan Muhtadi', 'success'),
     line('Fullstack Developer — 5 years experience', 'muted'),
@@ -38,6 +73,7 @@ export const COMMANDS: Record<CommandName, () => OutputLine[]> = {
     line('Portfolio   ihsanmuhtadi.com/portfolio', 'cyan'),
   ],
 
+  /** /skills — full tech stack organized by category */
   skills: () => [
     line('Tech stack:', 'yellow'),
     line(''),
@@ -52,6 +88,7 @@ export const COMMANDS: Record<CommandName, () => OutputLine[]> = {
     line('Soft skills: Project Management · Problem Solving · Communication', 'muted'),
   ],
 
+  /** /experience — work history in reverse chronological order */
   experience: () => [
     line('Work history:', 'yellow'),
     line(''),
@@ -69,6 +106,7 @@ export const COMMANDS: Record<CommandName, () => OutputLine[]> = {
     line('  Price management, stock operations.', 'muted'),
   ],
 
+  /** /portfolio — selected projects with tech stack */
   portfolio: () => [
     line('Selected projects:', 'yellow'),
     line(''),
@@ -84,6 +122,7 @@ export const COMMANDS: Record<CommandName, () => OutputLine[]> = {
     line('→ ihsanmuhtadi.com/portfolio  (see all projects)', 'cyan'),
   ],
 
+  /** /blog — latest articles and writing */
   blog: () => [
     line('Latest articles:', 'yellow'),
     line(''),
@@ -99,6 +138,7 @@ export const COMMANDS: Record<CommandName, () => OutputLine[]> = {
     line('→ ihsanmuhtadi.com/blog', 'cyan'),
   ],
 
+  /** /certifications — all completed courses and training */
   certifications: () => [
     line('Certifications & training:', 'yellow'),
     line(''),
@@ -117,6 +157,7 @@ export const COMMANDS: Record<CommandName, () => OutputLine[]> = {
     line('  GPA 3.00/4.00', 'muted'),
   ],
 
+  /** /contact — contact info and availability */
   contact: () => [
     line('Get in touch:', 'yellow'),
     line(''),
@@ -128,6 +169,7 @@ export const COMMANDS: Record<CommandName, () => OutputLine[]> = {
     line('Open for: freelance · full-time · collaboration', 'success'),
   ],
 
+  /** /playground — interactive demos (coming soon) */
   playground: () => [
     line('Playground — coming soon:', 'yellow'),
     line(''),
@@ -143,26 +185,64 @@ export const COMMANDS: Record<CommandName, () => OutputLine[]> = {
     line('Stay tuned!', 'orange'),
   ],
 
+  /**
+   * /clear — clears the terminal output
+   * Returns empty array; TerminalWindow.tsx handles
+   * the actual clearing when it sees this command name.
+   */
   clear: () => [],
 }
 
+/**
+ * Array of all valid command names.
+ * Used by TerminalHints.tsx to render shortcut chips,
+ * and by TerminalInput.tsx for Tab autocomplete.
+ */
 export const COMMAND_LIST = Object.keys(COMMANDS) as CommandName[]
 
+/**
+ * The initial output shown when the terminal first loads.
+ * Uses SSH-style connection sequence for a memorable first impression.
+ *
+ * TIP: Keep this concise — visitors see this before interacting.
+ * The onboarding flow (name + role selection) follows after this.
+ */
 export const WELCOME_MESSAGE: OutputLine[] = [
   line(''),
-  line(' ██╗██╗     ██╗███████╗  █████╗   ███╗        ██╗', 'success'),
-  line(' ██║██║     ██║██╔════╝██╔══██╗████╗     ██║', 'success'),
-  line(' ██║███████║███████╗███████║██╔██╗  ██║', 'success'),
-  line(' ██║██╔══██║╚════██║██╔══██║██║  ╚████║', 'success'),
-  line(' ██║██║     ██║███████║██║      ██║██║    ╚███║', 'success'),
-  line(' ╚═╝╚═╝     ╚═╝╚══════╝╚═╝      ╚═╝╚═╝         ╚═╝', 'success'),
+  line('  Connecting to ihsanmuhtadi.com...', 'muted'),
+  line('  Connection established.', 'success'),
   line(''),
-  line('  Fullstack Developer · Jakarta, Indonesia', 'muted'),
-  line('  PHP · Laravel · WordPress · React · Flutter', 'cyan'),
+  line('  ┌─────────────────────────────────────────┐', 'muted'),
+  line('  │                                         │', 'muted'),
+  line('  │   Ihsan Muhtadi  ·  Fullstack Developer │', 'success'),
+  line('  │   Jakarta, Indonesia                    │', 'muted'),
+  line('  │   PHP · Laravel · WordPress · React     │', 'cyan'),
+  line('  │                                         │', 'muted'),
+  line('  │   ● Open for freelance & collaboration  │', 'success'),
+  line('  │                                         │', 'muted'),
+  line('  └─────────────────────────────────────────┘', 'muted'),
   line(''),
-  line('  ─────────────────────────────────────────', 'muted'),
-  line('  Type help to see all commands.', 'default'),
+  line('  Type "/help" to see all available commands.', 'default'),
   line('  Tab to autocomplete  ·  ↑↓ for history', 'muted'),
-  line('  ─────────────────────────────────────────', 'muted'),
   line(''),
 ]
+
+
+// export const WELCOME_MESSAGE: OutputLine[] = [
+//   line(''),
+//   line(' ██╗██╗     ██╗███████╗  █████╗   ███╗        ██╗', 'success'),
+//   line(' ██║██║     ██║██╔════╝██╔══██╗████╗     ██║', 'success'),
+//   line(' ██║███████║███████╗███████║██╔██╗  ██║', 'success'),
+//   line(' ██║██╔══██║╚════██║██╔══██║██║  ╚████║', 'success'),
+//   line(' ██║██║     ██║███████║██║      ██║██║    ╚███║', 'success'),
+//   line(' ╚═╝╚═╝     ╚═╝╚══════╝╚═╝      ╚═╝╚═╝         ╚═╝', 'success'),
+//   line(''),
+//   line('  Fullstack Developer · Jakarta, Indonesia', 'muted'),
+//   line('  PHP · Laravel · WordPress · React · Flutter', 'cyan'),
+//   line(''),
+//   line('  ─────────────────────────────────────────', 'muted'),
+//   line('  Type help to see all commands.', 'default'),
+//   line('  Tab to autocomplete  ·  ↑↓ for history', 'muted'),
+//   line('  ─────────────────────────────────────────', 'muted'),
+//   line(''),
+// ]
